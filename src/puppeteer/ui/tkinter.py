@@ -59,14 +59,28 @@ class IssueView(tk.Text):
     def __init__(self, master, **kwargs):
         tk.Text.__init__(self, master, **kwargs)
 
-        font = tkFont.Font(family='Monospace', weight='normal', size=10)
+        font_family = 'Sans-Serif'
+
+        font = tkFont.Font(family=font_family, weight='normal', size=10)
         self.config(font=font)
 
-        font = tkFont.Font(family='Monospace', weight='bold', size=10)
+        font = tkFont.Font(family=font_family, weight='bold', size=10)
         self.tag_config('subject', font=font)
 
-        font = tkFont.Font(family='Sans-Serif', weight='normal', size=10)
+        font = tkFont.Font(family=font_family, weight='normal', size=10)
         self.tag_config('comment', font=font, lmargin1=20, lmargin2=20)
+
+        self.tag_config('link', font=font, foreground='blue', underline=True)
+        self.tag_bind('link', '<Enter>', lambda e: self.config(cursor='hand2'))
+        self.tag_bind('link', '<Leave>', lambda e: self.config(cursor='arrow'))
+        self.tag_bind('link', '<Button-1>', self.on_link_clicked)
+
+    def on_link_clicked(self, event):
+        w = event.widget
+        x, y = event.x, event.y
+        for tag in w.tag_names('@%d,%d' % (x, y)):
+            if tag.startswith('href:'):
+                webbrowser.open(tag[5:])
 
     def set_issue(self, issue):
         # http://effbot.org/tkinterbook/text.htm
@@ -74,15 +88,31 @@ class IssueView(tk.Text):
         self.delete(1.0, tk.END)
 
         if issue:
-            self.insert(tk.END, u'Subject: ' + issue['subject'], ('subject'))
-            self.insert(tk.END, u'\n\n' + issue['description'] + u'\n\n', ('comment'))
+            self.insert(tk.END, u'Subject: ' + issue['subject'] + u'\n\n', ('subject'))
+            self.add_comment(issue['description'])
 
             if 'comments' in issue:
                 for comment in issue['comments']:
-                    self.insert(tk.END, u'\n\n\nComment from %s:\n\n' % comment['user'], ('subject'))
-                    self.insert(tk.END, comment['body'].replace('\r\n', '\n'), ('comment'))
+                    self.insert(tk.END, u'\n\n\nComment from %s:\n' % comment['user'], ('subject'))
+                    self.add_comment(comment['body'])
 
         self.config(state=tk.DISABLED)
+
+    def add_comment(self, text):
+        """Adds some text with support for linking.
+
+        Text is added with the "comment" tag, links also have tags "link" and
+        "href:..." which are used by the click handler (on_link_clicked)."""
+        prefix = u''
+        for line in text.split('\n'):
+            for word in line.strip().split(' '):
+                if '://' in word:
+                    tags = ('comment', 'link', u'href:' + word)
+                else:
+                    tags = 'comment'
+                self.insert(tk.END, prefix + word, tags)
+                prefix = u' '
+            prefix = u'\n'
 
 
 class Window():
