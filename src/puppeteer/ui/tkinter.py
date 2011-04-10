@@ -6,6 +6,7 @@ import webbrowser
 import tkFont
 import Tkinter as tk
 
+import puppeteer.data
 import puppeteer.github
 import puppeteer.util
 
@@ -122,7 +123,7 @@ class Window():
 
         self.tk.title('GitHub Client')
 
-        self.list = IssueList(self.tk, self.get_data(), on_selected=self.on_selected, width='200px', bd=2)
+        self.list = IssueList(self.tk, puppeteer.data.get_data(), on_selected=self.on_selected, width='200px', bd=2)
         self.list.pack(fill=tk.Y, side=tk.LEFT, anchor=tk.W, ipady=4)
         self.list.pack_propagate(0)
 
@@ -138,18 +139,6 @@ class Window():
     def load_issues(self):
         self.issues = puppeteer.github.get_project_issues('tmradio/tmradio-client-gtk')
         return self.issues
-
-    def get_data(self):
-        cache_fn = os.path.expanduser('~/.puppeteer-cache.json')
-        if os.path.exists(cache_fn):
-            result = puppeteer.util.load_json(cache_fn)
-        else:
-            result = {}
-            for tracker in puppeteer.util.load_yaml(os.path.expanduser('~/.config/tremor.yaml'))['trackers']:
-                if tracker['type'].lower() == 'github':
-                    result[tracker['name']] = puppeteer.github.get_project_issues(tracker['name'])
-            puppeteer.util.save_json(cache_fn, result)
-        return result
 
 if __name__ == '__main__':
     Window().show()
