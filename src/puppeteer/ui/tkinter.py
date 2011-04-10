@@ -1,6 +1,7 @@
 # vim: set fileencoding=utf-8:
 
 import os
+import tkFont
 import Tkinter as tk
 
 import puppeteer.github
@@ -43,6 +44,36 @@ class IssueList(HScrollList):
         self.on_selected(self.issues[idx])
 
 
+class IssueView(tk.Text):
+    def __init__(self, master, **kwargs):
+        tk.Text.__init__(self, master, **kwargs)
+
+        font = tkFont.Font(family='Monospace', weight='normal', size=10)
+        self.config(font=font)
+
+        font = tkFont.Font(family='Monospace', weight='bold', size=10)
+        self.tag_config('subject', font=font)
+
+        font = tkFont.Font(family='Sans-Serif', weight='normal', size=10)
+        self.tag_config('comment', font=font, lmargin1=20, lmargin2=20)
+
+    def set_issue(self, issue):
+        # http://effbot.org/tkinterbook/text.htm
+        self.config(state=tk.NORMAL)
+        self.delete(1.0, tk.END)
+
+        if issue:
+            self.insert(tk.END, u'Subject: ' + issue['subject'], ('subject'))
+            self.insert(tk.END, u'\n\n' + issue['description'] + u'\n\n', ('comment'))
+
+            if 'comments' in issue:
+                for comment in issue['comments']:
+                    self.insert(tk.END, u'\n\n\nComment from %s:\n\n' % comment['user'], ('subject'))
+                    self.insert(tk.END, comment['body'].replace('\r\n', '\n'), ('comment'))
+
+        self.config(state=tk.DISABLED)
+
+
 class Window():
     def __init__(self):
         self.tk = tk.Tk()
@@ -54,14 +85,11 @@ class Window():
         self.list.pack(fill=tk.Y, side=tk.LEFT, anchor=tk.W, ipady=4)
         self.list.pack_propagate(0)
 
-        self.body = tk.Text(self.tk, bd=2, highlightthickness=0, wrap=tk.WORD)
+        self.body = IssueView(self.tk, bd=2, highlightthickness=0, wrap=tk.WORD, state=tk.DISABLED)
         self.body.pack(expand=tk.YES, fill=tk.BOTH, side=tk.RIGHT)
 
     def on_selected(self, issue):
-        # http://effbot.org/tkinterbook/text.htm
-        self.body.delete(1.0, tk.END)
-        if issue:
-            self.body.insert(tk.END, issue['description'])
+        self.body.set_issue(issue)
 
     def show(self):
         tk.mainloop()
