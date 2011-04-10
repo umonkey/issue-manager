@@ -9,7 +9,7 @@ import puppeteer.util
 class HScrollList(tk.Frame):
     def __init__(self, master, **kwargs):
         tk.Frame.__init__(self, master, **kwargs)
-        self.list = tk.Listbox(self)
+        self.list = tk.Listbox(self, highlightthickness=0)
         self.list.pack(side=tk.LEFT, expand=tk.YES, fill=tk.BOTH)
 
         self.scrollbar = tk.Scrollbar(self, command=self.list.yview)
