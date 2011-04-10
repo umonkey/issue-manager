@@ -42,7 +42,7 @@ class IssueList(HScrollList):
             self.list.insert(tk.END, project)
             self.issues.append(None)
             for num, issue in issues.items():
-                self.list.insert(tk.END, u'    %u: %s' % (int(num), issue['subject']))
+                self.list.insert(tk.END, u'    %s (%u)' % (issue['subject'], int(num)))
                 self.issues.append(issue)
 
     def on_click(self, event):
