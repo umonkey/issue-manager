@@ -1,6 +1,8 @@
 # vim: set fileencoding=utf-8:
 
 import os
+import webbrowser
+
 import tkFont
 import Tkinter as tk
 
@@ -14,12 +16,16 @@ class HScrollList(tk.Frame):
         self.list = tk.Listbox(self, highlightthickness=0)
         self.list.pack(side=tk.LEFT, expand=tk.YES, fill=tk.BOTH)
         self.list.bind('<ButtonRelease-1>', self.on_click)
+        self.list.bind('<Double-Button-1>', self.on_double_click)
 
         self.scrollbar = tk.Scrollbar(self, command=self.list.yview)
         self.list['yscrollcommand'] = self.scrollbar.set
         self.scrollbar.pack(side=tk.LEFT, fill=tk.Y)
 
     def on_click(self, event):
+        pass
+
+    def on_double_click(self, event):
         pass
 
 
@@ -42,6 +48,11 @@ class IssueList(HScrollList):
         lb = event.widget
         idx = int(lb.curselection()[0])
         self.on_selected(self.issues[idx])
+
+    def on_double_click(self, event):
+        lb = event.widget
+        idx = int(lb.curselection()[0])
+        webbrowser.open(self.issues[idx]['url'])
 
 
 class IssueView(tk.Text):

@@ -7,3 +7,4 @@ Literature used
 
 - http://effbot.org/tkinterbook/pack.htm
 - http://www.daniweb.com/software-development/python/code/216827
+- http://www.pythonware.com/library/tkinter/introduction/events-and-bindings.htm
