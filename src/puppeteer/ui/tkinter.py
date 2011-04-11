@@ -38,10 +38,10 @@ class IssueList(HScrollList):
         self.data = data
         self.issues = []
 
-        for project, issues in data.items():
+        for project, issues in sorted(data.items(), key=lambda a: a[0]):
             self.list.insert(tk.END, project)
             self.issues.append(None)
-            for num, issue in issues.items():
+            for num, issue in sorted(issues.items(), key=lambda i: i[1]['subject']):
                 self.list.insert(tk.END, u'    %s (%u)' % (issue['subject'], int(num)))
                 self.issues.append(issue)
 
