@@ -1,8 +1,10 @@
 # vim: set fileencoding=utf-8:
 
+import csv
+import megaplan
 import os
 import time
-import megaplan
+import urllib2
 
 import puppeteer.util
 
@@ -64,6 +66,48 @@ class GitHubClient:
                 issues[issue['number']]['comments'] = self.fetch_issue_comments(issue['number'])['comments']
         return issues
 
+class GoogleCodeClient:
+    def __init__(self, settings):
+        self.settings = settings
+
+    def get_project_issues(self):
+        users = self.settings['user']
+        if type(users) != list:
+            users = [users]
+
+        ts_limit = None
+        if 'delay' in self.settings:
+            delay = self.settings['delay'] or 14
+            ts_limit = time.time() - delay * 60 * 60 * 24
+
+        query = 'owner:' + self.settings['user']
+        if 'reporter' in self.settings:
+            query += ' OR reporter:' + self.settings['user']
+
+        url = 'http://code.google.com/p/%s/issues/csv?can=2&q=%s&colspec=ID+Summary+Modified' % (self.settings['name'], urllib2.quote(query))
+        data = puppeteer.util.fetch(url)
+        head = None
+
+        issues = {}
+        for row in csv.reader(data.split('\n')):
+            if head is None:
+                head = dict([(row[idx], idx) for idx in range(0, len(row))])
+            elif len(row):
+                ts = int(row[head['ModifiedTimestamp']])
+                if ts_limit is None or ts < ts_limit:
+                    link = 'http://code.google.com/p/%s/issues/detail?id=%s' % (self.settings['name'], row[head['ID']])
+                    issues[int(row[head['ID']])] = {
+                        'id': int(row[head['ID']]),
+                        'url': link,
+                        'subject': row[head['Summary']].decode('utf-8'),
+                        'description': 'None.',
+                        'comments': [],
+                        'time': ts,
+                        'project': 'Google Code/' + self.settings['name'],
+                    }
+
+        return issues
+
 def get_data():
     cache_fn = os.path.expanduser('~/.puppeteer-cache.json')
     if os.path.exists(cache_fn):
@@ -76,7 +120,11 @@ def get_data():
                 cls = GitHubClient
             elif tracker['type'].lower() == 'megaplan':
                 cls = MegaplanClient
+            elif tracker['type'].lower() == 'google code':
+                cls = GoogleCodeClient
             if cls is not None:
-                result[tracker['name']] = cls(tracker).get_project_issues()
+                issues = cls(tracker).get_project_issues()
+                if issues:
+                    result[tracker['name']] = issues
         puppeteer.util.save_json(cache_fn, result)
     return result
