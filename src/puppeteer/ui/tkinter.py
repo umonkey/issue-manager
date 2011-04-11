@@ -119,11 +119,10 @@ class IssueView(tk.Text):
 class Window():
     def __init__(self):
         self.tk = tk.Tk()
-        self.issues = {}
 
         self.tk.title('GitHub Client')
 
-        self.list = IssueList(self.tk, puppeteer.data.get_data(), on_selected=self.on_selected, width='200px', bd=2)
+        self.list = IssueList(self.tk, self.get_data(), on_selected=self.on_selected, width='200px', bd=2)
         self.list.pack(fill=tk.Y, side=tk.LEFT, anchor=tk.W, ipady=4)
         self.list.pack_propagate(0)
 
@@ -136,9 +135,11 @@ class Window():
     def show(self):
         tk.mainloop()
 
-    def load_issues(self):
-        self.issues = puppeteer.github.get_project_issues('tmradio/tmradio-client-gtk')
-        return self.issues
+    def get_data(self):
+        data = puppeteer.data.get_data()
+        count = sum([len(x) for x in data])
+        self.tk.title('Open Issues (%u)' % count)
+        return data
 
 if __name__ == '__main__':
     Window().show()
